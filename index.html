@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Quiz</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      :root {
+        --color-background-primary: #ffffff;
+        --color-background-secondary: #fff1f2;
+        --color-border-tertiary: #ffe4e6;
+        --color-border-secondary: #fecdd3;
+        --color-text-primary: #881337;
+        --color-text-secondary: #fb7185;
+        --color-accent: #f43f5e;
+        --border-radius-lg: 2rem;
+        --border-radius-md: 1rem;
+        --font-sans: 'Quicksand', 'Inter', sans-serif;
+      }
+      body {
+        font-family: var(--font-sans);
+        background-color: var(--color-background-secondary);
+        color: var(--color-text-primary);
+        overflow-x: hidden;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #app {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        position: relative;
+        z-index: 1;
+      }
+      .heart-canvas {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .card {
+        background: var(--color-background-primary);
+        border: 4px solid var(--color-border-tertiary);
+        border-radius: var(--border-radius-lg);
+        padding: 2.5rem 1.5rem;
+        max-width: 450px;
+        width: 100%;
+        text-align: center;
+        position: relative;
+        z-index: 10;
+        box-shadow: 0 25px 50px -12px rgba(244, 63, 94, 0.15);
+      }
+      .emoji-big { font-size: 70px; margin-bottom: 0.5rem; display: block; animation: float 3s ease-in-out infinite; }
+      @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-15px) rotate(5deg); }
+      }
+      .question {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--color-text-primary);
+        line-height: 1.2;
+        margin-bottom: 0.75rem;
+      }
+      .sub {
+        font-size: 15px;
+        color: var(--color-text-secondary);
+        margin-bottom: 2rem;
+        font-weight: 500;
+      }
+      .btn-row {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        align-items: center;
+        min-height: 70px;
+        position: relative;
+      }
+      .btn {
+        padding: 14px 28px;
+        border-radius: 999px;
+        border: none;
+        font-size: 17px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+        font-family: var(--font-sans);
+        box-shadow: 0 4px 6px rgba(244, 63, 94, 0.1);
+        position: relative;
+        touch-action: manipulation;
+      }
+      .btn-yes { background: var(--color-accent); color: #fff; }
+      .btn-no { background: #fee2e2; color: #ef4444; border: 2px solid #fecdd3; }
+      
+      .btn:active { transform: scale(0.95); }
+      .btn:disabled { opacity: 0.5; cursor: wait; }
+      
+      .run-away-btn {
+        position: fixed !important;
+        z-index: 9999;
+        transition: left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.2s;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 10px;
+        background: var(--color-background-secondary);
+        border-radius: 99px;
+        margin-bottom: 2rem;
+        overflow: hidden;
+        border: 2px solid var(--color-border-tertiary);
+      }
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #fb7185, #f43f5e);
+        border-radius: 99px;
+        transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      #gallery-container {
+        display: none;
+        width: 100%;
+        max-width: 1200px;
+        padding: 1rem;
+        z-index: 5;
+        animation: fadeIn 1s ease;
+      }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+      .masonry {
+        column-count: 3;
+        column-gap: 1rem;
+      }
+      @media (max-width: 900px) { .masonry { column-count: 2; } }
+      @media (max-width: 600px) { .masonry { column-count: 1; } }
+      
+      .gallery-item {
+        background: white;
+        margin-bottom: 1rem;
+        border-radius: var(--border-radius-md);
+        overflow: hidden;
+        break-inside: avoid;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        border: 2px solid var(--color-border-tertiary);
+        position: relative;
+      }
+      .video-wrapper {
+        position: relative;
+        width: 100%;
+        line-height: 0;
+      }
+      .mute-toggle {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background: rgba(0,0,0,0.6);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 16px;
+        backdrop-filter: blur(4px);
+        z-index: 5;
+        transition: transform 0.2s;
+        touch-action: manipulation;
+      }
+      .mute-toggle:active { transform: scale(0.9); }
+
+      .gallery-title {
+        font-size: 36px;
+        font-weight: 900;
+        text-align: center;
+        margin-bottom: 2rem;
+        color: var(--color-accent);
+      }
+
+      .final {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+      }
+      .final.show { display: flex; }
+      .tag {
+        font-size: 14px;
+        font-weight: 800;
+        padding: 8px 20px;
+        border-radius: 99px;
+        background: var(--color-accent);
+        color: white;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+    </style>
+</head>
+<body>
+    <canvas class="heart-canvas" id="hearts"></canvas>
+
+    <div id="app">
+      <div class="card" id="quiz-card">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress" style="width:0%"></div>
+        </div>
+        <span class="emoji-big" id="q-emoji">💭</span>
+        <p class="question" id="q-text">Loading...</p>
+        <p class="sub" id="q-sub"></p>
+        <div class="btn-row">
+          <button class="btn btn-yes" id="yes-btn">Yes</button>
+          <button class="btn btn-no" id="no-btn">No</button>
+        </div>
+      </div>
+
+      <div class="card final" id="final-card">
+        <span class="emoji-big">🎂</span>
+        <span class="tag">Happy Birthday, Nischal!</span>
+        <p class="question">You're the best! 🥳</p>
+        <p class="sub">Time for some special memories...</p>
+        <button class="btn btn-yes" onclick="showMemories()">Open Gallery 📸</button>
+      </div>
+
+      <div id="gallery-container">
+        <h2 class="gallery-title">Memories ✨</h2>
+        <div class="masonry" id="gallery-grid"></div>
+      </div>
+    </div>
+
+    <script>
+    const questions = [
+      { emoji:"💖", text:"Do you love me?", sub:"Think carefully. One correct answer.", yes:"Absolutely!", type: "yes" },
+      { emoji:"🤡", text:"Am I annoying?", sub:"Honesty is a virtue...", yes:"A little", type: "no" },
+      { emoji:"🍕", text:"Share pizza with me?", sub:"Friendship test!", yes:"Always!", type: "yes" },
+      { emoji:"💸", text:"Paying for dinner?", sub:"Birthday treat?", yes:"Wait what?", type: "no" },
+      { emoji:"🎂", text:"Happy Birthday!", sub:"Ready for the party?", yes:"YES! 🎉", type: "yes" },
+    ];
+
+    const noMessages = ["No","Nope","Really??","Are u sure","THINK AGAIN","Bro...","PLEASE","Don't","No ❤️"];
+    const media = [
+      { type: 'image', url: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=1000' },
+      { type: 'video', url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+      { type: 'image', url: 'https://images.unsplash.com/photo-1530103043960-ef38714abb15?q=80&w=1000' },
+      { type: 'video', url: 'https://www.w3schools.com/html/movie.mp4' },
+    ];
+
+    let current = 0;
+    let noCount = 0;
+    const noBtn = document.getElementById('no-btn');
+    const yesBtn = document.getElementById('yes-btn');
+
+    function placeRunAwayRandom(btn) {
+      const margin = 30;
+      const btnW = btn.offsetWidth;
+      const btnH = btn.offsetHeight;
+      const x = margin + Math.random() * (window.innerWidth - btnW - margin * 2);
+      const y = margin + Math.random() * (window.innerHeight - btnH - margin * 2);
+      btn.style.left = x + 'px';
+      btn.style.top = y + 'px';
+      btn.classList.add('run-away-btn');
+    }
+
+    function runAway(e) {
+      if (e) e.preventDefault();
+      const q = questions[current];
+      const targetBtn = q.type === 'yes' ? noBtn : yesBtn;
+      
+      noCount++;
+      if (targetBtn === noBtn) {
+        noBtn.textContent = noMessages[Math.min(noCount, noMessages.length - 1)];
+      }
+      placeRunAwayRandom(targetBtn);
+      spawnHearts(2);
+    }
+
+    function loadQuestion() {
+      if (current >= questions.length) {
+        document.getElementById('quiz-card').style.display = 'none';
+        document.getElementById('final-card').classList.add('show');
+        spawnHearts(30);
+        return;
+      }
+      const q = questions[current];
+      document.getElementById('q-emoji').textContent = q.emoji;
+      document.getElementById('q-text').textContent = q.text;
+      document.getElementById('q-sub').textContent = q.sub;
+      yesBtn.textContent = q.yes;
+      noBtn.textContent = 'No';
+      
+      [yesBtn, noBtn].forEach(btn => {
+        btn.classList.remove('run-away-btn');
+        btn.style.position = 'relative';
+        btn.style.left = 'auto'; btn.style.top = 'auto';
+        btn.onmouseover = btn.ontouchstart = null;
+        btn.onclick = null;
+      });
+
+      if (q.type === 'yes') {
+        yesBtn.onclick = handleCorrect;
+        noBtn.onmouseover = noBtn.ontouchstart = runAway;
+        noBtn.onclick = runAway;
+      } else {
+        noBtn.onclick = handleCorrect;
+        yesBtn.onmouseover = yesBtn.ontouchstart = runAway;
+        yesBtn.onclick = runAway;
+      }
+      updateProgress();
+    }
+
+    function handleCorrect() {
+      yesBtn.disabled = noBtn.disabled = true;
+      spawnHearts(20);
+      setTimeout(() => {
+        current++;
+        yesBtn.disabled = noBtn.disabled = false;
+        loadQuestion();
+      }, 800);
+    }
+
+    function updateProgress() {
+      document.getElementById('progress').style.width = (current / questions.length * 100) + '%';
+    }
+
+    function toggleMute(btn, videoId) {
+      const video = document.getElementById(videoId);
+      video.muted = !video.muted;
+      btn.textContent = video.muted ? '🔇' : '🔊';
+    }
+
+    function showMemories() {
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('gallery-container').style.display = 'block';
+      const grid = document.getElementById('gallery-grid');
+      media.forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = 'gallery-item';
+        if (item.type === 'image') {
+          div.innerHTML = `<img src="${item.url}">`;
+        } else {
+          const vidId = `vid-${idx}`;
+          div.innerHTML = `
+            <div class="video-wrapper">
+              <video id="${vidId}" src="${item.url}" autoplay muted loop playsinline></video>
+              <button class="mute-toggle" onclick="toggleMute(this, '${vidId}')">🔇</button>
+            </div>`;
+        }
+        grid.appendChild(div);
+      });
+      window.scrollTo(0, 0);
+    }
+
+    const hearts = [];
+    const canvas = document.getElementById('hearts');
+    const ctx = canvas.getContext('2d');
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resize(); window.addEventListener('resize', resize);
+
+    function spawnHearts(n) {
+      for (let i = 0; i < n; i++) {
+        hearts.push({
+          x: Math.random() * canvas.width,
+          y: canvas.height + 20,
+          size: 15 + Math.random() * 25,
+          speed: 2 + Math.random() * 4,
+          drift: (Math.random() - 0.5) * 3,
+          alpha: 1,
+          char: ['❤️','💕','💖','💗','✨','🌸','🎂','🥳'][Math.floor(Math.random()*8)]
+        });
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = hearts.length - 1; i >= 0; i--) {
+        const h = hearts[i];
+        h.y -= h.speed; h.x += h.drift; h.alpha -= 0.005;
+        ctx.globalAlpha = Math.max(0, h.alpha);
+        ctx.font = h.size + 'px serif';
+        ctx.fillText(h.char, h.x, h.y);
+        if (h.alpha <= 0) hearts.splice(i, 1);
+      }
+      requestAnimationFrame(animate);
+    }
+    animate(); loadQuestion();
+    </script>
+</body>
+</html>
