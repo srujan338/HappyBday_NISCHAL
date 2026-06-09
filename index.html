@@ -151,7 +151,7 @@
       }
       .gallery-item img, .gallery-item video {
         width: 100%;
-        height: auto; /* Fix cropping */
+        height: auto;
         display: block;
       }
       .video-wrapper {
@@ -249,7 +249,12 @@
       { emoji:"🎂", text:"Happy Birthday!", sub:"Ready for the party?", yes:"YES! 🎉", type: "yes" },
     ];
 
-    const noMessages = ["No","Nope","Really??","Are u sure","THINK AGAIN","Bro...","PLEASE","Don't","No ❤️"];
+    const noMessages = [
+      "No?", "Are you sure? 🥺", "Please reconsider! ✨", "But why? 😭", 
+      "I'm begging you! 🙏", "Don't do this! 💔", "Click the other one! 👉", 
+      "Pretty please? 🌸", "Think of the cake! 🎂", "Just one click? 💖", 
+      "Nisdaddy please! 💸", "You're breaking my heart! ❤️‍🩹", "Wrong button! 🤡"
+    ];
     
     // Media files from your folder
     const media = [
@@ -295,11 +300,10 @@
       const targetBtn = q.type === 'yes' ? noBtn : yesBtn;
       
       noCount++;
-      if (targetBtn === noBtn) {
-        noBtn.textContent = noMessages[Math.min(noCount, noMessages.length - 1)];
-      }
+      targetBtn.textContent = noMessages[noCount % noMessages.length];
+
       placeRunAwayRandom(targetBtn);
-      spawnHearts(2);
+      spawnHearts(5);
     }
 
     function loadQuestion() {
@@ -313,25 +317,28 @@
       document.getElementById('q-emoji').textContent = q.emoji;
       document.getElementById('q-text').textContent = q.text;
       document.getElementById('q-sub').textContent = q.sub;
+      
+      // Reset buttons
       yesBtn.textContent = q.yes;
       noBtn.textContent = 'No';
+      noCount = 0;
       
       [yesBtn, noBtn].forEach(btn => {
         btn.classList.remove('run-away-btn');
         btn.style.position = 'relative';
         btn.style.left = 'auto'; btn.style.top = 'auto';
-        btn.onmouseover = btn.ontouchstart = null;
+        btn.onmouseover = btn.ontouchstart = null; // Removed hover
         btn.onclick = null;
       });
 
       if (q.type === 'yes') {
         yesBtn.onclick = handleCorrect;
-        noBtn.onmouseover = noBtn.ontouchstart = runAway;
         noBtn.onclick = runAway;
+        noBtn.ontouchstart = (e) => { e.preventDefault(); runAway(); };
       } else {
         noBtn.onclick = handleCorrect;
-        yesBtn.onmouseover = yesBtn.ontouchstart = runAway;
         yesBtn.onclick = runAway;
+        yesBtn.ontouchstart = (e) => { e.preventDefault(); runAway(); };
       }
       updateProgress();
     }
