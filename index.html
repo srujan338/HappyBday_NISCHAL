@@ -125,6 +125,7 @@
         display: none;
         width: 100%;
         max-width: 1200px;
+        margin: 0 auto;
         padding: 1rem;
         z-index: 5;
         animation: fadeIn 1s ease;
@@ -147,6 +148,11 @@
         box-shadow: 0 10px 20px rgba(0,0,0,0.05);
         border: 2px solid var(--color-border-tertiary);
         position: relative;
+      }
+      .gallery-item img, .gallery-item video {
+        width: 100%;
+        height: auto; /* Fix cropping */
+        display: block;
       }
       .video-wrapper {
         position: relative;
@@ -227,11 +233,11 @@
         <p class="sub">Time for some special memories...</p>
         <button class="btn btn-yes" onclick="showMemories()">Open Gallery 📸</button>
       </div>
+    </div>
 
-      <div id="gallery-container">
-        <h2 class="gallery-title">Memories ✨</h2>
-        <div class="masonry" id="gallery-grid"></div>
-      </div>
+    <div id="gallery-container">
+      <h2 class="gallery-title">Memories ✨</h2>
+      <div class="masonry" id="gallery-grid"></div>
     </div>
 
     <script>
@@ -244,11 +250,27 @@
     ];
 
     const noMessages = ["No","Nope","Really??","Are u sure","THINK AGAIN","Bro...","PLEASE","Don't","No ❤️"];
+    
+    // Media files from your folder
     const media = [
-      { type: 'image', url: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=1000' },
-      { type: 'video', url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
-      { type: 'image', url: 'https://images.unsplash.com/photo-1530103043960-ef38714abb15?q=80&w=1000' },
-      { type: 'video', url: 'https://www.w3schools.com/html/movie.mp4' },
+      { type: 'image', url: 'media/boi1.jpeg' },
+      { type: 'image', url: 'media/boi2.jpeg' },
+      { type: 'video', url: 'media/boi14.mp4' },
+      { type: 'image', url: 'media/boi3.jpeg' },
+      { type: 'image', url: 'media/boi4.jpeg' },
+      { type: 'video', url: 'media/boi15.mp4' },
+      { type: 'image', url: 'media/boi5.jpeg' },
+      { type: 'image', url: 'media/boi6.jpeg' },
+      { type: 'video', url: 'media/boi16.mp4' },
+      { type: 'image', url: 'media/boi7.jpeg' },
+      { type: 'image', url: 'media/boi8.jpeg' },
+      { type: 'video', url: 'media/boi17.mp4' },
+      { type: 'image', url: 'media/boi9.jpeg' },
+      { type: 'image', url: 'media/boi10.jpeg' },
+      { type: 'video', url: 'media/boi18.mp4' },
+      { type: 'image', url: 'media/boi11.jpeg' },
+      { type: 'image', url: 'media/boi12.jpeg' },
+      { type: 'image', url: 'media/boi13.jpeg' },
     ];
 
     let current = 0;
@@ -336,8 +358,11 @@
 
     function showMemories() {
       document.getElementById('app').style.display = 'none';
-      document.getElementById('gallery-container').style.display = 'block';
+      const container = document.getElementById('gallery-container');
+      container.style.display = 'block';
+      
       const grid = document.getElementById('gallery-grid');
+      grid.innerHTML = ''; 
       media.forEach((item, idx) => {
         const div = document.createElement('div');
         div.className = 'gallery-item';
